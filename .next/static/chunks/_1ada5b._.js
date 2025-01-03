@@ -31,432 +31,108 @@ const HighchartsDrilldownMap = ()=>{
     const [options, setOptions] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "HighchartsDrilldownMap.useEffect": ()=>{
-            const fetchMapData = {
-                "HighchartsDrilldownMap.useEffect.fetchMapData": async ()=>{
-                    const nordicTopology = await fetch("https://code.highcharts.com/mapdata/custom/nordic-countries-core.topo.json").then({
-                        "HighchartsDrilldownMap.useEffect.fetchMapData": (response)=>response.json()
-                    }["HighchartsDrilldownMap.useEffect.fetchMapData"]);
-                    const topologies = {};
-                    for (const geometry of nordicTopology.objects.default.geometries){
-                        const key = geometry.properties["hc-key"];
-                        topologies[key] = await fetch(`https://code.highcharts.com/mapdata/countries/${key}/${key}-all.topo.json`).then({
-                            "HighchartsDrilldownMap.useEffect.fetchMapData": (response)=>response.json()
-                        }["HighchartsDrilldownMap.useEffect.fetchMapData"]);
-                    }
-                    setOptions({
-                        chart: {
-                            map: nordicTopology
-                        },
-                        title: {
-                            text: "Highcharts Maps Drilldown - Atlanta"
-                        },
-                        subtitle: {
-                            text: 'Source map: <a href="https://code.highcharts.com/mapdata/custom/nordic-countries.topo.json">Nordic Countries</a>'
-                        },
-                        mapView: {
-                            projection: {
-                                name: "WebMercator"
-                            }
-                        },
-                        mapNavigation: {
-                            enabled: true,
-                            buttonOptions: {
-                                verticalAlign: "bottom"
-                            }
-                        },
-                        colorAxis: {
-                            min: 0
-                        },
-                        plotOptions: {
-                            map: {
-                                dataLabels: {
-                                    enabled: true,
-                                    format: "{point.name}"
+            const initMap = {
+                "HighchartsDrilldownMap.useEffect.initMap": async ()=>{
+                    try {
+                        // Fetch the GeoJSON data
+                        const countiesGeoJSON = await fetch("/geojson/simplified_Counties.geojson").then({
+                            "HighchartsDrilldownMap.useEffect.initMap": (res)=>res.json()
+                        }["HighchartsDrilldownMap.useEffect.initMap"]);
+                        const censusTractsGeoJSON = await fetch("/geojson/simplified_CTs.geojson").then({
+                            "HighchartsDrilldownMap.useEffect.initMap": (res)=>res.json()
+                        }["HighchartsDrilldownMap.useEffect.initMap"]);
+                        // Preprocess drilldown data
+                        const drilldownData = {};
+                        censusTractsGeoJSON.features.forEach({
+                            "HighchartsDrilldownMap.useEffect.initMap": (feature)=>{
+                                const countyKey = feature.properties.COUNTYFP;
+                                if (!drilldownData[countyKey]) {
+                                    drilldownData[countyKey] = [];
                                 }
+                                drilldownData[countyKey].push({
+                                    key: feature.properties.COUNTYFP,
+                                    name: feature.properties.NAME,
+                                    value: Math.random() * 100
+                                });
                             }
-                        },
-                        series: [
-                            {
-                                name: "Scandanavian data",
-                                mapData: nordicTopology,
-                                type: "map",
-                                // provider: {
-                                //   url: "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-                                // },
-                                showInLegend: false,
-                                data: [
-                                    {
-                                        "hc-key": "no",
-                                        value: 15,
-                                        drilldown: "norway"
+                        }["HighchartsDrilldownMap.useEffect.initMap"]);
+                        // Configure drilldown series
+                        const drilldownSeries = Object.keys(drilldownData).map({
+                            "HighchartsDrilldownMap.useEffect.initMap.drilldownSeries": (countyKey)=>({
+                                    id: countyKey,
+                                    name: `Census Tracts in County ${countyKey}`,
+                                    mapData: {
+                                        type: "FeatureCollection",
+                                        features: censusTractsGeoJSON.features.filter({
+                                            "HighchartsDrilldownMap.useEffect.initMap.drilldownSeries": (feature)=>feature.properties.COUNTYFP === countyKey
+                                        }["HighchartsDrilldownMap.useEffect.initMap.drilldownSeries"])
                                     },
-                                    {
-                                        "hc-key": "is",
-                                        value: 14,
-                                        drilldown: "iceland"
-                                    },
-                                    {
-                                        "hc-key": "fo",
-                                        value: 13,
-                                        drilldown: "faroe-islands"
-                                    },
-                                    {
-                                        "hc-key": "fi",
-                                        value: 12,
-                                        drilldown: "finland"
-                                    },
-                                    {
-                                        "hc-key": "se",
-                                        value: 11,
-                                        drilldown: "sweden"
-                                    },
-                                    {
-                                        "hc-key": "dk",
-                                        value: 10,
-                                        drilldown: "denmark"
-                                    }
-                                ]
-                            }
-                        ],
-                        drilldown: {
-                            activeDataLabelStyle: {
-                                color: "#FFFFFF",
-                                textDecoration: "none",
-                                textOutline: "1px #000000"
+                                    data: drilldownData[countyKey].map({
+                                        "HighchartsDrilldownMap.useEffect.initMap.drilldownSeries": (item)=>({
+                                                key: item.key,
+                                                value: item.value
+                                            })
+                                    }["HighchartsDrilldownMap.useEffect.initMap.drilldownSeries"])
+                                })
+                        }["HighchartsDrilldownMap.useEffect.initMap.drilldownSeries"]);
+                        // Set chart options
+                        setOptions({
+                            chart: {
+                                map: countiesGeoJSON
                             },
-                            breadcrumbs: {
-                                floating: true,
-                                showFullPath: false
+                            title: {
+                                text: "Drilldown Map with GeoJSON"
                             },
-                            mapZooming: true,
+                            mapNavigation: {
+                                enabled: true
+                            },
+                            colorAxis: {
+                                min: 0
+                            },
                             series: [
                                 {
-                                    id: "norway",
-                                    name: "Norway",
-                                    mapData: topologies.no,
-                                    data: [
-                                        [
-                                            "no-vl-46",
-                                            10
-                                        ],
-                                        [
-                                            "no-mr-15",
-                                            11
-                                        ],
-                                        [
-                                            "no-ag-42",
-                                            12
-                                        ],
-                                        [
-                                            "no-no-18",
-                                            13
-                                        ],
-                                        [
-                                            "no-vi-30",
-                                            14
-                                        ],
-                                        [
-                                            "no-ro-11",
-                                            15
-                                        ],
-                                        [
-                                            "no-tf-54",
-                                            16
-                                        ],
-                                        [
-                                            "no-td-50",
-                                            17
-                                        ],
-                                        [
-                                            "no-os-0301",
-                                            18
-                                        ],
-                                        [
-                                            "no-vt-38",
-                                            19
-                                        ],
-                                        [
-                                            "no-in-34",
-                                            20
-                                        ]
-                                    ]
-                                },
-                                {
-                                    id: "iceland",
-                                    name: "Iceland",
-                                    mapData: topologies.is,
-                                    data: [
-                                        [
-                                            "is-ne",
-                                            10
-                                        ],
-                                        [
-                                            "is-sl",
-                                            11
-                                        ],
-                                        [
-                                            "is-su",
-                                            12
-                                        ],
-                                        [
-                                            "is-ho",
-                                            13
-                                        ],
-                                        [
-                                            "is-6642",
-                                            14
-                                        ],
-                                        [
-                                            "is-vf",
-                                            15
-                                        ],
-                                        [
-                                            "is-al",
-                                            16
-                                        ],
-                                        [
-                                            "is-vl",
-                                            17
-                                        ],
-                                        [
-                                            "is-nv",
-                                            18
-                                        ]
-                                    ]
-                                },
-                                {
-                                    id: "faroe-islands",
-                                    name: "Faroe Islands",
-                                    mapData: topologies.fo,
-                                    data: [
-                                        [
-                                            "fo-os",
-                                            10
-                                        ]
-                                    ]
-                                },
-                                {
-                                    id: "sweden",
-                                    name: "Sweden",
-                                    mapData: topologies.se,
-                                    data: [
-                                        [
-                                            "se-4461",
-                                            10
-                                        ],
-                                        [
-                                            "se-ka",
-                                            11
-                                        ],
-                                        [
-                                            "se-og",
-                                            12
-                                        ],
-                                        [
-                                            "se-nb",
-                                            13
-                                        ],
-                                        [
-                                            "se-vn",
-                                            14
-                                        ],
-                                        [
-                                            "se-vb",
-                                            15
-                                        ],
-                                        [
-                                            "se-gt",
-                                            16
-                                        ],
-                                        [
-                                            "se-st",
-                                            17
-                                        ],
-                                        [
-                                            "se-up",
-                                            18
-                                        ],
-                                        [
-                                            "se-bl",
-                                            19
-                                        ],
-                                        [
-                                            "se-vg",
-                                            20
-                                        ],
-                                        [
-                                            "se-ko",
-                                            21
-                                        ],
-                                        [
-                                            "se-gv",
-                                            22
-                                        ],
-                                        [
-                                            "se-jo",
-                                            23
-                                        ],
-                                        [
-                                            "se-kr",
-                                            24
-                                        ],
-                                        [
-                                            "se-or",
-                                            25
-                                        ],
-                                        [
-                                            "se-vm",
-                                            26
-                                        ],
-                                        [
-                                            "se-ha",
-                                            27
-                                        ],
-                                        [
-                                            "se-sd",
-                                            28
-                                        ],
-                                        [
-                                            "se-vr",
-                                            29
-                                        ],
-                                        [
-                                            "se-ja",
-                                            30
-                                        ],
-                                        [
-                                            "se-sn",
-                                            31
-                                        ]
-                                    ]
-                                },
-                                {
-                                    id: "finland",
-                                    name: "Finland",
-                                    mapData: topologies.fi,
-                                    data: [
-                                        [
-                                            "fi-3280",
-                                            10
-                                        ],
-                                        [
-                                            "fi-3272",
-                                            11
-                                        ],
-                                        [
-                                            "fi-3275",
-                                            12
-                                        ],
-                                        [
-                                            "fi-3281",
-                                            13
-                                        ],
-                                        [
-                                            "fi-3279",
-                                            14
-                                        ],
-                                        [
-                                            "fi-3276",
-                                            15
-                                        ],
-                                        [
-                                            "fi-3287",
-                                            16
-                                        ],
-                                        [
-                                            "fi-3286",
-                                            17
-                                        ],
-                                        [
-                                            "fi-3290",
-                                            18
-                                        ],
-                                        [
-                                            "fi-3291",
-                                            19
-                                        ],
-                                        [
-                                            "fi-3292",
-                                            20
-                                        ],
-                                        [
-                                            "fi-3293",
-                                            21
-                                        ],
-                                        [
-                                            "fi-3294",
-                                            22
-                                        ],
-                                        [
-                                            "fi-3295",
-                                            23
-                                        ],
-                                        [
-                                            "fi-3296",
-                                            24
-                                        ],
-                                        [
-                                            "fi-3288",
-                                            25
-                                        ],
-                                        [
-                                            "fi-3285",
-                                            26
-                                        ],
-                                        [
-                                            "fi-3289",
-                                            27
-                                        ]
-                                    ]
-                                },
-                                {
-                                    id: "denmark",
-                                    name: "Denmark",
-                                    mapData: topologies.dk,
-                                    data: [
-                                        [
-                                            "dk-6326",
-                                            10
-                                        ],
-                                        [
-                                            "dk-3564",
-                                            11
-                                        ],
-                                        [
-                                            "dk-3568",
-                                            12
-                                        ],
-                                        [
-                                            "dk-6325",
-                                            13
-                                        ],
-                                        [
-                                            "dk-3563",
-                                            14
-                                        ]
-                                    ]
+                                    name: "Counties",
+                                    mapData: countiesGeoJSON,
+                                    data: countiesGeoJSON.features.map({
+                                        "HighchartsDrilldownMap.useEffect.initMap": (feature)=>({
+                                                key: feature.properties.COUNTYFP,
+                                                value: Math.random() * 100,
+                                                drilldown: feature.properties.COUNTYFP
+                                            })
+                                    }["HighchartsDrilldownMap.useEffect.initMap"])
                                 }
-                            ]
-                        }
-                    });
+                            ],
+                            drilldown: {
+                                series: drilldownSeries
+                            }
+                        });
+                    } catch (error) {
+                        console.error("Error loading GeoJSON data:", error);
+                    }
                 }
-            }["HighchartsDrilldownMap.useEffect.fetchMapData"];
-            fetchMapData();
+            }["HighchartsDrilldownMap.useEffect.initMap"];
+            initMap();
         }
     }["HighchartsDrilldownMap.useEffect"], []);
-    return options ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$highcharts$2d$react$2d$official$2f$dist$2f$highcharts$2d$react$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-        highcharts: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$highcharts$2f$highcharts$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"],
-        constructorType: "mapChart",
-        options: options
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        children: options ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$highcharts$2d$react$2d$official$2f$dist$2f$highcharts$2d$react$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+            highcharts: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$highcharts$2f$highcharts$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"],
+            constructorType: "mapChart",
+            options: options
+        }, void 0, false, {
+            fileName: "[project]/components/HighchartsDrilldownMap.jsx",
+            lineNumber: 95,
+            columnNumber: 9
+        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            children: "Loading map..."
+        }, void 0, false, {
+            fileName: "[project]/components/HighchartsDrilldownMap.jsx",
+            lineNumber: 101,
+            columnNumber: 9
+        }, this)
     }, void 0, false, {
         fileName: "[project]/components/HighchartsDrilldownMap.jsx",
-        lineNumber: 206,
-        columnNumber: 5
-    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        children: "Loading map..."
-    }, void 0, false, {
-        fileName: "[project]/components/HighchartsDrilldownMap.jsx",
-        lineNumber: 212,
+        lineNumber: 93,
         columnNumber: 5
     }, this);
 };

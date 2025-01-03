@@ -310,4 +310,8 @@ img, video {
   line-height: 2rem;
 }
 
+.filter {
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+
 /*# sourceMappingURL=assets_styles_globals_b52d8e.css.map*/
